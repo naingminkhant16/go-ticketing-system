@@ -1,0 +1,76 @@
+package main
+
+import (
+	"log"
+	"os"
+	"strconv"
+	"ticketing-system/config"
+	"ticketing-system/config/database"
+	"ticketing-system/config/database/migration"
+	"ticketing-system/handler"
+	"ticketing-system/middleware"
+	"ticketing-system/repository"
+	"ticketing-system/route"
+	"ticketing-system/service"
+
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+)
+
+func main() {
+	// load env values
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("No .env file found")
+	}
+
+	router := gin.Default()
+
+	// middlewares
+	router.Use(middleware.ErrorHandler())
+
+	// connect database
+	database.ConnectDatabase()
+
+	// database migration
+	migration.MigrateDatabase(database.DB)
+
+	// register module
+	registerModules(router)
+
+	port := os.Getenv("APP_PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	if err := router.Run(":" + port); err != nil {
+		panic(err)
+		return
+	}
+}
+
+func registerModules(router *gin.Engine) {
+	smtpPort, err := strconv.Atoi(config.GetEnvOrPanic("SMTP_PORT"))
+	if err != nil {
+		panic("Invalid SMTP_PORT")
+	}
+	// mail service
+	mailService := service.NewSMTPService(config.SMTPConfig{
+		Host:     config.GetEnvOrPanic("SMTP_HOST"),
+		Port:     smtpPort,
+		Username: config.GetEnvOrPanic("SMTP_USERNAME"),
+		Password: config.GetEnvOrPanic("SMTP_PASSWORD"),
+		From:     config.GetEnvOrPanic("SMTP_FROM_MAIL_ADDRESS"),
+	})
+
+	// users
+	userRepository := repository.NewUserRepository(database.DB)
+	userService := service.NewUserService(userRepository)
+	userHandler := handler.NewUserHandler(userService)
+
+	// auth
+	authService := service.NewAuthService(userService, mailService)
+	authHandler := handler.NewAuthHandler(authService)
+
+	route.RegisterAuthRoutes(router, authHandler)
+	route.RegisterUserRoutes(router, userHandler)
+}
