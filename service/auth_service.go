@@ -66,3 +66,20 @@ func (svc *AuthService) Register(dto dto.UserRegisterDto, role entity.UserRole, 
 
 	return user, nil
 }
+
+func (svc *AuthService) Login(input dto.UserLoginDto) (string, error) {
+
+	user, err := svc.userSvc.GetByEmail(input.Email)
+	if err != nil {
+		return "", err
+	}
+	if user == nil {
+		return "", apperror.BadRequest("Email not found")
+	}
+
+	if user.VerifiedAt == nil {
+		return "", apperror.BadRequest("Please verify your email")
+	}
+
+	// generate JWT access token
+}

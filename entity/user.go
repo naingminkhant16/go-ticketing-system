@@ -27,9 +27,9 @@ type User struct {
 	Password   string     `gorm:"not null;size:255" json:"-"`
 	Role       UserRole   `gorm:"type:char(20);default:'customer'" json:"role"`
 	Status     UserStatus `gorm:"type:char(20);default:'active'" json:"status"`
-	VerifiedAt time.Time  `gorm:"default:null" json:"verified_at"`
+	VerifiedAt *time.Time `gorm:"default:null" json:"verified_at"`
 	Gender     string     `gorm:"size:20;default:null" json:"gender"`
-	Dob        time.Time  `gorm:"default:null" json:"dob"`
+	Dob        *time.Time `gorm:"default:null" json:"dob"`
 
 	// Relations
 	Seats []Seat `gorm:"foreignKey:ReservedBy" json:"seats"`

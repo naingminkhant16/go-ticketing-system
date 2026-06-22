@@ -34,3 +34,13 @@ func (ah *AuthHandler) Register(ctx *gin.Context) {
 
 	response.Created(ctx, user)
 }
+
+func (ah *AuthHandler) Login(ctx *gin.Context) {
+	var input dto.UserLoginDto
+	if err := ctx.ShouldBind(&input); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	accessToken, err := ah.authService.Login(input)
+}
