@@ -43,4 +43,23 @@ func (ah *AuthHandler) Login(ctx *gin.Context) {
 	}
 
 	accessToken, err := ah.authService.Login(input)
+
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	response.Success(ctx, "success", accessToken)
+}
+
+func (ah *AuthHandler) Profile(ctx *gin.Context) {
+	userID := ctx.GetString("user_id")
+
+	user, err := ah.authService.GetProfile(userID)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	response.Success(ctx, "success", user)
 }

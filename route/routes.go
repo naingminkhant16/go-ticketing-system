@@ -2,6 +2,7 @@ package route
 
 import (
 	"ticketing-system/handler"
+	"ticketing-system/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,5 +18,7 @@ func RegisterAuthRoutes(router *gin.Engine, authHandler *handler.AuthHandler) {
 	rg := router.Group("/api/auth")
 	{
 		rg.POST("/register", authHandler.Register)
+		rg.POST("/login", authHandler.Login)
+		rg.Use(middleware.AuthHandler()).GET("/profile", authHandler.Profile)
 	}
 }

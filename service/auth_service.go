@@ -5,10 +5,12 @@ import (
 	"log"
 	apperror "ticketing-system/common/error"
 	"ticketing-system/common/helper"
+	"ticketing-system/common/jwt"
 	"ticketing-system/entity"
 	"ticketing-system/entity/dto"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/wneessen/go-mail"
 	"gorm.io/gorm"
 )
@@ -48,7 +50,7 @@ func (svc *AuthService) Register(dto dto.UserRegisterDto, role entity.UserRole, 
 		Password: hashedPassword,
 		Role:     role,
 		Gender:   dto.Gender,
-		Dob:      dto.Dob,
+		Dob:      &dto.Dob,
 	})
 	if err != nil {
 		return nil, err
@@ -71,9 +73,6 @@ func (svc *AuthService) Login(input dto.UserLoginDto) (string, error) {
 
 	user, err := svc.userSvc.GetByEmail(input.Email)
 	if err != nil {
-		return "", err
-	}
-	if user == nil {
 		return "", apperror.BadRequest("Email not found")
 	}
 
@@ -81,5 +80,35 @@ func (svc *AuthService) Login(input dto.UserLoginDto) (string, error) {
 		return "", apperror.BadRequest("Please verify your email")
 	}
 
-	// generate JWT access token
+	// verify passwords
+	if !helper.VerifyPassword(input.Password, user.Password) {
+		return "", apperror.BadRequest("Incorrect email or password")
+	}
+
+	accessToken, err := jwt.GenerateToken(user.ID.String(), user.Email, jwt.AccessToken)
+	if err != nil {
+		return "", apperror.InternalServer("Internal Server Error")
+	}
+
+	//refreshToken, err := jwt.GenerateToken(user.ID.String(), user.Email, jwt.RefreshToken)
+	//if err != nil {
+	//	return "", apperror.InternalServer("Internal Server Error")
+	//}
+
+	return accessToken, nil
+}
+
+func (svc *AuthService) GetProfile(userId string) (*entity.User, error) {
+	uid, err := uuid.Parse(userId)
+	if err != nil {
+		return nil, apperror.NotFound("User not found")
+	}
+
+	user, err := svc.userSvc.userRepository.GetById(uid)
+
+	if err != nil {
+		return nil, apperror.NotFound("User not found")
+	}
+
+	return user, nil
 }
