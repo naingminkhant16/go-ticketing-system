@@ -85,7 +85,7 @@ func (svc *AuthService) Login(input dto.UserLoginDto) (string, error) {
 		return "", apperror.BadRequest("Incorrect email or password")
 	}
 
-	accessToken, err := jwt.GenerateToken(user.ID.String(), user.Email, jwt.AccessToken)
+	accessToken, err := jwt.GenerateToken(user.ID.String(), user.Email, string(user.Role), jwt.AccessToken)
 	if err != nil {
 		return "", apperror.InternalServer("Internal Server Error")
 	}

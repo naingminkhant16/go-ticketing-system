@@ -13,6 +13,7 @@ var Secret string = os.Getenv("JWT_SECRET")
 type Claims struct {
 	UserID string `json:"user_id"`
 	Email  string `json:"email"`
+	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -23,28 +24,28 @@ const (
 	RefreshToken TokenType = "refresh_token"
 )
 
-func GenerateToken(userID string, email string, tokenType TokenType) (string, error) {
+func GenerateToken(userID string, email string, role string, tokenType TokenType) (string, error) {
 	var expiresAt time.Time
 
+	now := time.Now().UTC()
 	switch tokenType {
 	case RefreshToken:
-		expiresAt = time.Now().Add(24 * time.Hour)
-		break
+		expiresAt = now.Add(24 * time.Hour)
 	case AccessToken:
-	default:
-		expiresAt = time.Now().Add(5 * time.Minute)
+		expiresAt = now.Add(2 * time.Hour)
 	}
 
 	claims := Claims{
 		UserID: userID,
 		Email:  email,
+		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			IssuedAt:  jwt.NewNumericDate(now),
 			Issuer:    os.Getenv("JWT_ISSUER"),
 		},
 	}
-
+	log.Println("Expires at ", expiresAt)
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodHS256,
 		claims,
