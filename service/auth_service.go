@@ -3,9 +3,10 @@ package service
 import (
 	"errors"
 	"log"
+	"ticketing-system/common/auth"
 	apperror "ticketing-system/common/error"
 	"ticketing-system/common/helper"
-	"ticketing-system/common/jwt"
+	"ticketing-system/common/response"
 	"ticketing-system/entity"
 	"ticketing-system/entity/dto"
 
@@ -69,33 +70,36 @@ func (svc *AuthService) Register(dto dto.UserRegisterDto, role entity.UserRole, 
 	return user, nil
 }
 
-func (svc *AuthService) Login(input dto.UserLoginDto) (string, error) {
+func (svc *AuthService) Login(input dto.UserLoginDto) (*response.LoginResponse, error) {
 
 	user, err := svc.userSvc.GetByEmail(input.Email)
 	if err != nil {
-		return "", apperror.BadRequest("Email not found")
+		return nil, apperror.BadRequest("Email not found")
 	}
 
 	if user.VerifiedAt == nil {
-		return "", apperror.BadRequest("Please verify your email")
+		return nil, apperror.BadRequest("Please verify your email")
 	}
 
 	// verify passwords
 	if !helper.VerifyPassword(input.Password, user.Password) {
-		return "", apperror.BadRequest("Incorrect email or password")
+		return nil, apperror.BadRequest("Incorrect email or password")
 	}
 
-	accessToken, err := jwt.GenerateToken(user.ID.String(), user.Email, string(user.Role), jwt.AccessToken)
+	accessToken, err := auth.GenerateToken(user.ID.String(), user.Email, string(user.Role), auth.AccessToken)
 	if err != nil {
-		return "", apperror.InternalServer("Internal Server Error")
+		return nil, apperror.InternalServer("Internal Server Error")
 	}
 
-	//refreshToken, err := jwt.GenerateToken(user.ID.String(), user.Email, jwt.RefreshToken)
-	//if err != nil {
-	//	return "", apperror.InternalServer("Internal Server Error")
-	//}
+	refreshToken, err := auth.GenerateToken(user.ID.String(), user.Email, string(user.Role), auth.RefreshToken)
+	if err != nil {
+		return nil, apperror.InternalServer("Internal Server Error")
+	}
 
-	return accessToken, nil
+	return &response.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
 }
 
 func (svc *AuthService) GetProfile(userId string) (*entity.User, error) {
@@ -111,4 +115,21 @@ func (svc *AuthService) GetProfile(userId string) (*entity.User, error) {
 	}
 
 	return user, nil
+}
+
+func (svc *AuthService) RefreshToken(rt string) (string, error) {
+	claims, err := auth.ParseToken(rt)
+
+	if err != nil || claims == nil {
+		log.Println(err)
+		return "", apperror.BadRequest("Unauthorized")
+	}
+
+	accessToken, err := auth.GenerateToken(claims.UserID, claims.Email, claims.Role, auth.AccessToken)
+
+	if err != nil {
+		return "", apperror.InternalServer("Internal Server Error")
+	}
+
+	return accessToken, nil
 }

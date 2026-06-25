@@ -1,6 +1,7 @@
-package jwt
+package auth
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -8,7 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var Secret string = os.Getenv("JWT_SECRET")
+var JWTSecret string = os.Getenv("JWT_SECRET")
 
 type Claims struct {
 	UserID string `json:"user_id"`
@@ -30,9 +31,9 @@ func GenerateToken(userID string, email string, role string, tokenType TokenType
 	now := time.Now().UTC()
 	switch tokenType {
 	case RefreshToken:
-		expiresAt = now.Add(24 * time.Hour)
+		expiresAt = now.Add(730 * time.Hour) // 1 month
 	case AccessToken:
-		expiresAt = now.Add(2 * time.Hour)
+		expiresAt = now.Add(1 * time.Hour) // 1 hr
 	}
 
 	claims := Claims{
@@ -45,13 +46,15 @@ func GenerateToken(userID string, email string, role string, tokenType TokenType
 			Issuer:    os.Getenv("JWT_ISSUER"),
 		},
 	}
+
 	log.Println("Expires at ", expiresAt)
+
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodHS256,
 		claims,
 	)
 
-	tokenString, err := token.SignedString([]byte(Secret))
+	tokenString, err := token.SignedString([]byte(JWTSecret))
 
 	if err != nil {
 		log.Println("Failed to generate token:", err)
@@ -59,4 +62,21 @@ func GenerateToken(userID string, email string, role string, tokenType TokenType
 	}
 
 	return tokenString, nil
+}
+
+func ParseToken(tokenString string) (*Claims, error) {
+	var claims Claims
+	token, err := jwt.ParseWithClaims(tokenString, &claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(JWTSecret), nil
+	}, jwt.WithLeeway(2*time.Minute))
+
+	if err != nil || !token.Valid {
+		log.Println("JWT Parsing Error:", err)
+		return nil, err
+	}
+
+	return &claims, nil
 }

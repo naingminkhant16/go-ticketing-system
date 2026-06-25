@@ -11,6 +11,11 @@ type Response struct {
 	Data    interface{} `json:"data,omitempty"`
 }
 
+type LoginResponse struct {
+	AccessToken  string
+	RefreshToken string
+}
+
 func Success(c *gin.Context, message string, data any) {
 	if message == "" {
 		message = "Success"

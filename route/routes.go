@@ -19,6 +19,8 @@ func RegisterAuthRoutes(router *gin.Engine, authHandler *handler.AuthHandler) {
 	{
 		rg.POST("/register", authHandler.Register)
 		rg.POST("/login", authHandler.Login)
+		rg.POST("/refresh", authHandler.RefreshToken)
 		rg.Use(middleware.AuthHandler()).GET("/profile", authHandler.Profile)
+		// TODO :  send verify email callback endpoint
 	}
 }

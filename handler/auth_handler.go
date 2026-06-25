@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"ticketing-system/common/response"
+	"ticketing-system/config"
 	"ticketing-system/entity"
 	"ticketing-system/entity/dto"
 	"ticketing-system/service"
@@ -42,14 +44,14 @@ func (ah *AuthHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	accessToken, err := ah.authService.Login(input)
-
+	tokens, err := ah.authService.Login(input)
 	if err != nil {
 		ctx.Error(err)
 		return
 	}
+	setRefreshTokenHTTPOnlyCookie(ctx, tokens.RefreshToken)
 
-	response.Success(ctx, "success", accessToken)
+	response.Success(ctx, "success", tokens.AccessToken)
 }
 
 func (ah *AuthHandler) Profile(ctx *gin.Context) {
@@ -62,4 +64,39 @@ func (ah *AuthHandler) Profile(ctx *gin.Context) {
 	}
 
 	response.Success(ctx, "success", user)
+}
+
+func (ah *AuthHandler) RefreshToken(ctx *gin.Context) {
+	rt, err := ctx.Cookie("refresh_token")
+
+	if err != nil {
+		log.Println("RefreshToken cookie not found")
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "Unauthorized"})
+		return
+	}
+
+	accessToken, err := ah.authService.RefreshToken(rt)
+	if err != nil {
+		log.Println(err)
+		ctx.Error(err)
+		return
+	}
+	
+	response.Success(ctx, "success", accessToken)
+}
+
+func setRefreshTokenHTTPOnlyCookie(ctx *gin.Context, rt string) {
+	appDomain := config.GetEnvOrPanic("APP_DOMAIN")
+	appEnv := config.GetEnvOrPanic("APP_ENV")
+
+	// set refresh token in http only cookie
+	ctx.SetCookie(
+		"refresh_token",
+		rt,
+		86400,
+		"/",
+		appDomain,
+		appEnv == "production",
+		true,
+	)
 }
