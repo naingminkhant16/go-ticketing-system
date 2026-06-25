@@ -1,12 +1,19 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"html/template"
 	"ticketing-system/config"
 
 	"github.com/wneessen/go-mail"
 )
+
+type VerifyEmailData struct {
+	Name            string
+	VerificationURL string
+}
 
 type SMTPService struct {
 	client *mail.Client
@@ -54,5 +61,40 @@ func (s *SMTPService) Send(
 	if err := s.client.DialAndSendWithContext(ctx, msg); err != nil {
 		return fmt.Errorf("send email: %w", err)
 	}
+	return nil
+}
+
+func (s *SMTPService) SendVerificationEmail(ctx context.Context, toEmail string, userName string, token string) error {
+	verifyURL := config.GetEnvOrPanic("EMAIL_VERIFY_URL") + "?token=" + token
+
+	data := VerifyEmailData{
+		Name:            userName,
+		VerificationURL: verifyURL,
+	}
+
+	// Parse the HTML file
+	tmpl, err := template.ParseFiles("public/templates/verify-email.html")
+	if err != nil {
+		return fmt.Errorf("failed to parse template file: %w", err)
+	}
+
+	// Render the template with the dynamic data into a buffer
+	var bodyBuffer bytes.Buffer
+	if err := tmpl.Execute(&bodyBuffer, data); err != nil {
+		return fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	err = s.Send(
+		ctx,
+		toEmail,
+		"Verify Your Email Address",
+		bodyBuffer.String(),
+		mail.TypeTextHTML,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to send verification email: %w", err)
+	}
+
 	return nil
 }

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Verify Your Email</title>
+    <style>
+        .container { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px; }
+        .button { display: inline-block; padding: 12px 24px; margin: 20px 0; font-size: 16px; color: #ffffff !important; background-color: #007bff; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        .footer { margin-top: 30px; font-size: 12px; color: #777777; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Hello {{.Name}},</h2>
+    <p>Thank you for registering! Please click the button below to verify your email address and activate your account.</p>
+
+    <a href="{{.VerificationURL}}" class="button" target="_blank">Verify Email Address</a>
+
+    <p>If the button doesn't work, you can also copy and paste the following link into your browser:</p>
+    <p><a href="{{.VerificationURL}}">{{.VerificationURL}}</a></p>
+
+    <hr>
+    <p class="footer">Link will expire in 24hr.</p>
+</div>
+</body>
+</html>

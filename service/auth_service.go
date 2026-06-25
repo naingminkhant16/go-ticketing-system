@@ -12,7 +12,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/wneessen/go-mail"
 	"gorm.io/gorm"
 )
 
@@ -57,13 +56,9 @@ func (svc *AuthService) Register(dto dto.UserRegisterDto, role entity.UserRole, 
 		return nil, err
 	}
 
-	if err := svc.mailService.Send(
-		ctx,
-		user.Email,
-		"Please Verify the Email",
-		"Click Here to verify your email",
-		mail.TypeTextPlain,
-	); err != nil {
+	// TODO : generate verify mail token and store in Redis cache
+	token := ""
+	if err := svc.mailService.SendVerificationEmail(ctx, user.Email, user.Name, token); err != nil {
 		log.Println(err)
 	}
 
