@@ -21,8 +21,9 @@ type Claims struct {
 type TokenType string
 
 const (
-	AccessToken  TokenType = "access_token"
-	RefreshToken TokenType = "refresh_token"
+	AccessToken     TokenType = "access_token"
+	RefreshToken    TokenType = "refresh_token"
+	MailVerifyToken TokenType = "mail_verify_token"
 )
 
 func GenerateToken(userID string, email string, role string, tokenType TokenType) (string, error) {
@@ -34,6 +35,8 @@ func GenerateToken(userID string, email string, role string, tokenType TokenType
 		expiresAt = now.Add(730 * time.Hour) // 1 month
 	case AccessToken:
 		expiresAt = now.Add(1 * time.Hour) // 1 hr
+	case MailVerifyToken:
+		expiresAt = now.Add(24 * time.Hour) // 24 hr
 	}
 
 	claims := Claims{

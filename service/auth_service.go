@@ -56,8 +56,11 @@ func (svc *AuthService) Register(dto dto.UserRegisterDto, role entity.UserRole, 
 		return nil, err
 	}
 
-	// TODO : generate verify mail token and store in Redis cache
-	token := ""
+	token, err := auth.GenerateToken(user.ID.String(), user.Email, string(user.Role), auth.MailVerifyToken)
+	if err != nil {
+		return nil, apperror.InternalServer("Internal Server Error")
+	}
+
 	if err := svc.mailService.SendVerificationEmail(ctx, user.Email, user.Name, token); err != nil {
 		log.Println(err)
 	}
