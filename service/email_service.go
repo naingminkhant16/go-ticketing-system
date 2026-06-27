@@ -39,6 +39,8 @@ func NewSMTPService(cfg config.SMTPConfig) *SMTPService {
 	}
 }
 
+// TODO : make send mail use goroutine
+
 func (s *SMTPService) Send(
 	ctx context.Context,
 	to string,

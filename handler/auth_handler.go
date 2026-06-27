@@ -81,8 +81,20 @@ func (ah *AuthHandler) RefreshToken(ctx *gin.Context) {
 		ctx.Error(err)
 		return
 	}
-	
+
 	response.Success(ctx, "success", accessToken)
+}
+
+func (ah *AuthHandler) VerifyMail(ctx *gin.Context) {
+	token := ctx.Query("token")
+	
+	err := ah.authService.VerifyMail(token)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	response.Success(ctx, "success", nil)
 }
 
 func setRefreshTokenHTTPOnlyCookie(ctx *gin.Context, rt string) {

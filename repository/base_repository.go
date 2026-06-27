@@ -34,7 +34,7 @@ func (repo *BaseRepository[T]) GetById(id uuid.UUID) (*T, error) {
 }
 
 func (repo *BaseRepository[T]) Save(data T) (*T, error) {
-	result := repo.db.Create(&data)
+	result := repo.db.Save(&data)
 	if result.Error != nil {
 		log.Fatalf("Error saving records: %v", result.Error)
 		return nil, result.Error

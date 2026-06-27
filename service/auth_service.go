@@ -9,6 +9,7 @@ import (
 	"ticketing-system/common/response"
 	"ticketing-system/entity"
 	"ticketing-system/entity/dto"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -44,7 +45,7 @@ func (svc *AuthService) Register(dto dto.UserRegisterDto, role entity.UserRole, 
 		return nil, err
 	}
 
-	user, err := svc.userSvc.Create(entity.User{
+	user, err := svc.userSvc.Save(entity.User{
 		Name:     dto.Name,
 		Email:    dto.Email,
 		Password: hashedPassword,
@@ -130,4 +131,35 @@ func (svc *AuthService) RefreshToken(rt string) (string, error) {
 	}
 
 	return accessToken, nil
+}
+
+func (svc *AuthService) VerifyMail(token string) error {
+	claim, err := auth.ParseToken(token)
+	if err != nil || claim == nil {
+		return apperror.Unauthorized("Invalid token")
+	}
+
+	uid, err := uuid.Parse(claim.UserID)
+	if err != nil {
+		return apperror.NotFound("User not found")
+	}
+
+	user, err := svc.userSvc.userRepository.GetById(uid)
+	if err != nil {
+		return apperror.NotFound("User not found")
+	}
+
+	if user.VerifiedAt != nil {
+		return apperror.BadRequest("Bad Request")
+	}
+
+	now := time.Now()
+	user.VerifiedAt = &now
+
+	_, err = svc.userSvc.userRepository.Save(*user)
+	if err != nil {
+		return apperror.InternalServer("Internal Server Error")
+	}
+
+	return nil
 }
