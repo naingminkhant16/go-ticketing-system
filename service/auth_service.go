@@ -62,9 +62,7 @@ func (svc *AuthService) Register(dto dto.UserRegisterDto, role entity.UserRole, 
 		return nil, apperror.InternalServer("Internal Server Error")
 	}
 
-	if err := svc.mailService.SendVerificationEmail(ctx, user.Email, user.Name, token); err != nil {
-		log.Println(err)
-	}
+	go svc.mailService.SendVerificationEmail(ctx, user.Email, user.Name, token)
 
 	return user, nil
 }

@@ -3,8 +3,8 @@ package service
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"html/template"
+	"log"
 	"ticketing-system/config"
 
 	"github.com/wneessen/go-mail"
@@ -47,26 +47,34 @@ func (s *SMTPService) Send(
 	subject string,
 	body string,
 	contentType mail.ContentType,
-) error {
+) {
 	msg := mail.NewMsg()
 	if err := msg.From(s.from); err != nil {
-		return fmt.Errorf("set from address: %w", err)
+		log.Printf("set from address: %w", err)
+		return
 	}
 
 	if err := msg.To(to); err != nil {
-		return fmt.Errorf("set to address: %w", err)
+		log.Printf("set to address: %w", err)
+		return
 	}
 
 	msg.Subject(subject)
 	msg.SetBodyString(contentType, body)
 
 	if err := s.client.DialAndSendWithContext(ctx, msg); err != nil {
-		return fmt.Errorf("send email: %w", err)
+		log.Printf("Failed to send email: %s", err)
+		return
 	}
-	return nil
+
 }
 
-func (s *SMTPService) SendVerificationEmail(ctx context.Context, toEmail string, userName string, token string) error {
+func (s *SMTPService) SendVerificationEmail(
+	ctx context.Context,
+	toEmail string,
+	userName string,
+	token string,
+) {
 	verifyURL := config.GetEnvOrPanic("EMAIL_VERIFY_URL") + "?token=" + token
 
 	data := VerifyEmailData{
@@ -77,26 +85,22 @@ func (s *SMTPService) SendVerificationEmail(ctx context.Context, toEmail string,
 	// Parse the HTML file
 	tmpl, err := template.ParseFiles("public/templates/verify-email.html")
 	if err != nil {
-		return fmt.Errorf("failed to parse template file: %w", err)
+		log.Println("failed to parse template file")
+		return
 	}
 
 	// Render the template with the dynamic data into a buffer
 	var bodyBuffer bytes.Buffer
 	if err := tmpl.Execute(&bodyBuffer, data); err != nil {
-		return fmt.Errorf("failed to execute template: %w", err)
+		log.Println("failed to execute template")
+		return
 	}
 
-	err = s.Send(
+	s.Send(
 		ctx,
 		toEmail,
 		"Verify Your Email Address",
 		bodyBuffer.String(),
 		mail.TypeTextHTML,
 	)
-
-	if err != nil {
-		return fmt.Errorf("failed to send verification email: %w", err)
-	}
-
-	return nil
 }
