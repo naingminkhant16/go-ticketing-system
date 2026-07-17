@@ -1,0 +1,6 @@
+.git
+.idea
+.vscode
+.env
+docker-compose.yml
+README*

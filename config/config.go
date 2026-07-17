@@ -17,3 +17,10 @@ func GetEnvOrPanic(key string) string {
 	}
 	return value
 }
+func GetEnvOrDefault(key, fallback string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+	return value
+}

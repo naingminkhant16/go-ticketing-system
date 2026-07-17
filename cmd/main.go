@@ -1,12 +1,12 @@
 package main
 
 import (
-	"log"
 	"os"
 	"strconv"
 	"ticketing-system/config"
 	"ticketing-system/config/database"
 	"ticketing-system/config/database/migration"
+	redisconfig "ticketing-system/config/redis"
 	"ticketing-system/handler"
 	"ticketing-system/middleware"
 	"ticketing-system/repository"
@@ -18,10 +18,8 @@ import (
 )
 
 func main() {
-	// load env values
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("No .env file found")
-	}
+	// load local env values when present
+	_ = godotenv.Load()
 
 	router := gin.Default()
 
@@ -31,6 +29,10 @@ func main() {
 	// connect database
 	database.ConnectDatabase()
 
+	// connect redis
+	redisconfig.ConnectRedis()
+	defer redisconfig.CloseRedis()
+	
 	// database migration
 	migration.MigrateDatabase(database.DB)
 
