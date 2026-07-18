@@ -6,6 +6,7 @@ import (
 	"ticketing-system/config"
 	"ticketing-system/config/database"
 	"ticketing-system/config/database/migration"
+	"ticketing-system/config/database/seeder"
 	redisconfig "ticketing-system/config/redis"
 	"ticketing-system/handler"
 	"ticketing-system/middleware"
@@ -32,9 +33,12 @@ func main() {
 	// connect redis
 	redisconfig.ConnectRedis()
 	defer redisconfig.CloseRedis()
-	
+
 	// database migration
 	migration.MigrateDatabase(database.DB)
+
+	// seed admin users
+	_ = seeder.SeedAdminUsers(database.DB)
 
 	// register module
 	registerModules(router)
