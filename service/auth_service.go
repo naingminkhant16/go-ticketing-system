@@ -45,13 +45,15 @@ func (svc *AuthService) Register(dto dto.UserRegisterDto, role entity.UserRole, 
 		return nil, err
 	}
 
+	dob, _ := time.Parse("2006-01-02", dto.Dob)
+
 	user, err := svc.userSvc.Save(entity.User{
 		Name:     dto.Name,
 		Email:    dto.Email,
 		Password: hashedPassword,
 		Role:     role,
 		Gender:   dto.Gender,
-		Dob:      &dto.Dob,
+		Dob:      &dob,
 	})
 	if err != nil {
 		return nil, err

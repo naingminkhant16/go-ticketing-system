@@ -24,3 +24,12 @@ func RegisterAuthRoutes(router *gin.Engine, authHandler *handler.AuthHandler) {
 		rg.Use(middleware.AuthHandler()).GET("/profile", authHandler.Profile) // Protected
 	}
 }
+
+func RegisterEventRoutes(router *gin.Engine, eventHandler *handler.EventHandler) {
+	rg := router.Group("/api/admin/events")
+
+	{
+		rg.GET("", eventHandler.GetAllEvents)
+		rg.POST("", eventHandler.CreateEvent)
+	}
+}

@@ -38,3 +38,9 @@ func NoContent(c *gin.Context) {
 		Message: "Success",
 	})
 }
+
+func NotFound(c *gin.Context) {
+	c.JSON(http.StatusNotFound, Response{
+		Message: "Not Found",
+	})
+}

@@ -77,6 +77,12 @@ func registerModules(router *gin.Engine) {
 	authService := service.NewAuthService(userService, mailService)
 	authHandler := handler.NewAuthHandler(authService)
 
+	// events
+	eventRepository := repository.NewEventRepository(database.DB)
+	eventService := service.NewEventService(eventRepository)
+	eventHandler := handler.NewEventHandler(eventService)
+
 	route.RegisterAuthRoutes(router, authHandler)
 	route.RegisterUserRoutes(router, userHandler)
+	route.RegisterEventRoutes(router, eventHandler)
 }

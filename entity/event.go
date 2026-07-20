@@ -28,8 +28,8 @@ type Event struct {
 	Organizer      string      `gorm:"type:varchar(255);not null" json:"organizer"`
 	IsPublished    bool        `gorm:"type:boolean;default:false" json:"is_published"`
 	IssueCenter    string      `gorm:"type:varchar(255);not null" json:"issue_center"`
-	TotalSeats     int         `gorm:"type:int;not null" json:"total_seats"`
-	AvailableSeats int         `gorm:"type:int;not null" json:"available_seats"`
+	TotalSeats     int         `gorm:"type:int;default:null" json:"total_seats"`
+	AvailableSeats int         `gorm:"type:int;default:null" json:"available_seats"`
 	Status         EventStatus `gorm:"type:char(20);not null;default:upcoming" json:"status"`
 
 	// Relations
