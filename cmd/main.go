@@ -4,6 +4,7 @@ import (
 	"os"
 	"strconv"
 	"ticketing-system/config"
+	"ticketing-system/config/cloud"
 	"ticketing-system/config/database"
 	"ticketing-system/config/database/migration"
 	"ticketing-system/config/database/seeder"
@@ -13,6 +14,7 @@ import (
 	"ticketing-system/repository"
 	"ticketing-system/route"
 	"ticketing-system/service"
+	"ticketing-system/service/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -43,6 +45,9 @@ func main() {
 	// register module
 	registerModules(router)
 
+	// load S3
+	cloud.LoadS3Config()
+
 	port := os.Getenv("APP_PORT")
 	if port == "" {
 		port = "8080"
@@ -68,6 +73,9 @@ func registerModules(router *gin.Engine) {
 		From:     config.GetEnvOrPanic("SMTP_FROM_MAIL_ADDRESS"),
 	})
 
+	// s3 service
+	s3 := storage.NewS3(cloud.S3Client)
+
 	// users
 	userRepository := repository.NewUserRepository(database.DB)
 	userService := service.NewUserService(userRepository)
@@ -79,7 +87,7 @@ func registerModules(router *gin.Engine) {
 
 	// events
 	eventRepository := repository.NewEventRepository(database.DB)
-	eventService := service.NewEventService(eventRepository)
+	eventService := service.NewEventService(eventRepository, s3)
 	eventHandler := handler.NewEventHandler(eventService)
 
 	route.RegisterAuthRoutes(router, authHandler)
