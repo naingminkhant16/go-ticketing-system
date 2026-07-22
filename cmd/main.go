@@ -42,12 +42,13 @@ func main() {
 	// seed admin users
 	_ = seeder.SeedAdminUsers(database.DB)
 
-	// register module
-	registerModules(router)
-
 	// load S3
 	cloud.LoadS3Config()
 
+	// register module
+	registerModules(router)
+
+	// TODO: [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
 	port := os.Getenv("APP_PORT")
 	if port == "" {
 		port = "8080"

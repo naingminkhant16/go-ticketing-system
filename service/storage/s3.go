@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log"
+	apperror "ticketing-system/common/error"
 	"ticketing-system/config/cloud"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -19,6 +20,12 @@ func NewS3(client *s3.Client) *S3 {
 }
 
 func (s S3) Upload(ctx context.Context, key string, body io.Reader) (string, error) {
+	if s.client == nil {
+		log.Println(s.client)
+		log.Println("S3 client is unavailable")
+		return "", apperror.InternalServer("s3 service is unavailable")
+	}
+
 	log.Printf("Uploading %s to S3", key)
 	_, err := s.client.PutObject(
 		ctx,

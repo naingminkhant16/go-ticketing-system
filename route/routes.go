@@ -27,7 +27,7 @@ func RegisterAuthRoutes(router *gin.Engine, authHandler *handler.AuthHandler) {
 
 func RegisterEventRoutes(router *gin.Engine, eventHandler *handler.EventHandler) {
 	rg := router.Group("/api/admin/events")
-
+	// TODO: add auth middleware
 	{
 		rg.GET("", eventHandler.GetAllEvents)
 		rg.POST("", eventHandler.CreateEvent)

@@ -23,5 +23,16 @@ func LoadS3Config() {
 		options.UsePathStyle = true
 		options.BaseEndpoint = aws.String(config2.GetEnvOrDefault("AWS_ENDPOINT", "http://localstack:4566"))
 	})
+
 	S3Bucket = config2.GetEnvOrDefault("AWS_BUCKET", "go-ticketing")
+
+	_, err = S3Client.CreateBucket(context.TODO(), &s3.CreateBucketInput{
+		Bucket: aws.String(S3Bucket),
+	})
+
+	if err != nil {
+		log.Fatal("unable to create S3 bucket", err)
+	}
+
+	log.Println("S3 client loaded")
 }

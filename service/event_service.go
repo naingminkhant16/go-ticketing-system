@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"mime/multipart"
+	"path/filepath"
+	apperror "ticketing-system/common/error"
 	"ticketing-system/entity"
 	"ticketing-system/entity/dto"
 	"ticketing-system/repository"
@@ -25,6 +27,12 @@ func (es *EventService) GetAllEvents() ([]entity.Event, error) {
 }
 
 func (es *EventService) Create(dto *dto.EventCreateDto) (*entity.Event, error) {
+	if dto == nil {
+		return nil, apperror.BadRequest("event payload is required")
+	}
+	if dto.CoverImage == nil {
+		return nil, apperror.BadRequest("cover image is required")
+	}
 
 	startDate, _ := time.Parse("2006-01-02", dto.StartDate)
 	endDate, _ := time.Parse("2006-01-02", dto.EndDate)
@@ -39,24 +47,20 @@ func (es *EventService) Create(dto *dto.EventCreateDto) (*entity.Event, error) {
 		})
 	}
 
-	key := dto.CoverImage.Filename + "_" + time.Now().String()
+	key := fmt.Sprintf("%d_%s", time.Now().UnixNano(), filepath.Base(dto.CoverImage.Filename))
+
 	file, err := dto.CoverImage.Open()
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return nil, apperror.BadRequest("failed to open cover image")
 	}
-	defer func(file multipart.File) {
-		err := file.Close()
-		if err != nil {
-			log.Println(err)
-		}
-	}(file)
+	defer file.Close()
 
 	// upload cover photo file to s3
 	key, err = es.s3Service.Upload(context.Background(), key, file)
 
 	if err != nil {
-		log.Println("Failed to upload file to S3", err)
+		log.Println("Failed to upload file to S3 : ", err)
 		return nil, err
 	}
 
